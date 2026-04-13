@@ -65,12 +65,12 @@ if errorlevel 1 (
   echo curl is not available on PATH.
   exit /b 1
 )
-curl -L "https://raw.githubusercontent.com/%PDFW_SCRIPT_REPO%/%PDFW_SCRIPT_REF%/tools/pdfimages_to_pdfw.py" -o "%TOOLS_DIR%\pdfimages_to_pdfw.py"
+curl -L "https://raw.githubusercontent.com/%PDFW_SCRIPT_REPO%/%PDFW_SCRIPT_REF%/tools/pdfw.py" -o "%TOOLS_DIR%\pdfw.py"
 if errorlevel 1 (
   echo Failed to download python helper script from %PDFW_SCRIPT_REPO% at ref %PDFW_SCRIPT_REF%.
   exit /b 1
 )
-curl -L "https://raw.githubusercontent.com/%PDFW_SCRIPT_REPO%/%PDFW_SCRIPT_REF%/tools/delete_duplicate_files.py" -o "%TOOLS_DIR%\delete_duplicate_files.py"
+curl -L "https://raw.githubusercontent.com/%PDFW_SCRIPT_REPO%/%PDFW_SCRIPT_REF%/tools/dedup.py" -o "%TOOLS_DIR%\dedup.py"
 if errorlevel 1 (
   echo Failed to download duplicate file deleter script from %PDFW_SCRIPT_REPO% at ref %PDFW_SCRIPT_REF%.
   exit /b 1
