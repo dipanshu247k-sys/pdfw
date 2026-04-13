@@ -60,9 +60,14 @@ powershell -NoProfile -Command "$o=@{qpdf_exe='%QPDF_EXE%'}; $o | ConvertTo-Json
 powershell -NoProfile -Command "$o=@{pdfimages_exe='%PDFIMAGES_EXE%'}; $o | ConvertTo-Json | Set-Content -Encoding UTF8 '%TOOLS_DIR%\pdfimages-path.json'"
 
 echo [6/6] Downloading python helper script...
+where curl >nul 2>nul
+if errorlevel 1 (
+  echo curl is not available on PATH.
+  exit /b 1
+)
 curl -L "https://raw.githubusercontent.com/%PDFW_SCRIPT_REPO%/%PDFW_SCRIPT_REF%/tools/pdfimages_to_pdfw.py" -o "%TOOLS_DIR%\pdfimages_to_pdfw.py"
 if errorlevel 1 (
-  echo Failed to download python helper script.
+  echo Failed to download python helper script from %PDFW_SCRIPT_REPO% at ref %PDFW_SCRIPT_REF%.
   exit /b 1
 )
 

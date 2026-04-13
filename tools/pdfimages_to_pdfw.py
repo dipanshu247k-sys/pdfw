@@ -23,7 +23,7 @@ def load_pdfimages_path(script_dir: Path) -> Path:
     try:
         data = json.loads(config_path.read_text(encoding="utf-8-sig"))
     except json.JSONDecodeError as exc:
-        raise ValueError(f"Invalid JSON format in {config_path}") from exc
+        raise ValueError(f"Invalid JSON format in {config_path}: {exc}") from exc
     exe_path = data.get("pdfimages_exe")
     if not exe_path:
         raise ValueError(f"'pdfimages_exe' not found in {config_path}")
