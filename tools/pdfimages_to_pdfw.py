@@ -68,6 +68,22 @@ def main() -> int:
             print(f"pdfimages failed with exit code {exc.returncode}", file=sys.stderr)
             return 1
 
+        delete_script = script_dir / "delete_duplicate_files.py"
+        if not delete_script.exists():
+            print(f"Missing helper script: {delete_script}", file=sys.stderr)
+            return 1
+        try:
+            subprocess.run(
+                [sys.executable, str(delete_script), str(tmp_path)],
+                check=True,
+            )
+        except subprocess.CalledProcessError as exc:
+            print(
+                f"delete_duplicate_files.py failed with exit code {exc.returncode}",
+                file=sys.stderr,
+            )
+            return 1
+
         images = sorted(
             [p for p in tmp_path.iterdir() if p.is_file() and p.name.startswith("w-")],
             key=lambda p: natural_key(p.name),
