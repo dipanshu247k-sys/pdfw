@@ -10,10 +10,12 @@ import img2pdf
 
 
 def natural_key(value: str):
+    """Build a natural-sort key so names with numbers sort in human order."""
     return [int(part) if part.isdigit() else part.lower() for part in re.split(r"(\d+)", value)]
 
 
 def load_pdfimages_path(script_dir: Path) -> Path:
+    """Load and validate pdfimages.exe path from pdfimages-path.json near this script."""
     config_path = script_dir / "pdfimages-path.json"
     if not config_path.exists():
         raise FileNotFoundError(f"Missing config file: {config_path}")
@@ -78,7 +80,7 @@ def main() -> int:
         try:
             with output_pdf.open("wb") as output_file:
                 output_file.write(img2pdf.convert([str(img) for img in images]))
-        except Exception as exc:
+        except (OSError, ValueError, TypeError) as exc:
             print(f"Failed to create output PDF: {exc}", file=sys.stderr)
             return 1
 

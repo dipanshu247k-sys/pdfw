@@ -3,6 +3,7 @@ setlocal enabledelayedexpansion
 
 set "DST=%USERPROFILE%\Downloads\pdfw-tools"
 set "TOOLS_DIR=%DST%\tools"
+set "PDFW_SCRIPT_REPO=dipanshu247k-sys/pdfw"
 set "PDFW_SCRIPT_REF=main"
 if not exist "%DST%" mkdir "%DST%"
 if not exist "%TOOLS_DIR%" mkdir "%TOOLS_DIR%"
@@ -59,7 +60,7 @@ powershell -NoProfile -Command "$o=@{qpdf_exe='%QPDF_EXE%'}; $o | ConvertTo-Json
 powershell -NoProfile -Command "$o=@{pdfimages_exe='%PDFIMAGES_EXE%'}; $o | ConvertTo-Json | Set-Content -Encoding UTF8 '%TOOLS_DIR%\pdfimages-path.json'"
 
 echo [6/6] Downloading python helper script...
-curl -L "https://raw.githubusercontent.com/dipanshu247k-sys/pdfw/%PDFW_SCRIPT_REF%/tools/pdfimages_to_pdfw.py" -o "%TOOLS_DIR%\pdfimages_to_pdfw.py"
+curl -L "https://raw.githubusercontent.com/%PDFW_SCRIPT_REPO%/%PDFW_SCRIPT_REF%/tools/pdfimages_to_pdfw.py" -o "%TOOLS_DIR%\pdfimages_to_pdfw.py"
 if errorlevel 1 (
   echo Failed to download python helper script.
   exit /b 1
