@@ -10,7 +10,7 @@ After setup, `%USERPROFILE%\Downloads\pdfw-tools\tools` will contain:
 - `qpdf-path.json` (resolved `qpdf.exe` path)
 - `pdfimages-path.json` (resolved `pdfimages.exe` path)
 - `pdfimages_to_pdfw.py` (helper script downloaded from this repository)
-- `delete_duplicate_files.py` (duplicate file deleter that keeps one copy of each file)
+- `delete_duplicate_files.py` (duplicate file deleter that removes all copies of duplicated content)
 
 Use the helper script by passing a PDF path as argument:
 

@@ -23,7 +23,7 @@ def iter_files(root: Path, recursive: bool):
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Delete duplicate files while always keeping one copy."
+        description="Delete all files that are part of duplicate-content groups."
     )
     parser.add_argument("target_dir", help="Directory to scan for duplicate files")
     parser.add_argument(
@@ -43,8 +43,7 @@ def main() -> int:
         print("No files found.")
         return 0
 
-    kept_by_hash = {}
-    deleted_count = 0
+    files_by_hash = {}
 
     for file_path in files:
         try:
@@ -52,8 +51,13 @@ def main() -> int:
         except OSError as exc:
             print(f"Failed to read {file_path}: {exc}", file=sys.stderr)
             return 1
+        files_by_hash.setdefault(fingerprint, []).append(file_path)
 
-        if fingerprint in kept_by_hash:
+    deleted_count = 0
+    for group in files_by_hash.values():
+        if len(group) < 2:
+            continue
+        for file_path in group:
             try:
                 file_path.unlink()
                 deleted_count += 1
@@ -61,11 +65,12 @@ def main() -> int:
             except OSError as exc:
                 print(f"Failed to delete {file_path}: {exc}", file=sys.stderr)
                 return 1
-        else:
-            kept_by_hash[fingerprint] = file_path
 
-    kept_count = len(kept_by_hash)
-    print(f"Completed. Kept {kept_count} unique file(s), deleted {deleted_count} duplicate file(s).")
+    remaining_count = sum(1 for group in files_by_hash.values() if len(group) == 1)
+    print(
+        f"Completed. Deleted {deleted_count} file(s) from duplicate groups, "
+        f"left {remaining_count} non-duplicate file(s)."
+    )
     return 0
 
 
