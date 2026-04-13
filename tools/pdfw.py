@@ -169,7 +169,7 @@ def convert_pdf(
         if watermark_image is not None:
             try:
                 apply_watermark(output_pdf, watermark_image)
-            except Exception as exc:
+            except (RuntimeError, ValueError, OSError) as exc:
                 print(f"Failed to apply watermark to {output_pdf}: {exc}", file=sys.stderr)
                 return 1
 
