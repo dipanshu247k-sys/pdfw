@@ -95,6 +95,7 @@ def iter_pdfs(source_dir: Path, output_root: Path):
         if path.suffix.lower() != ".pdf":
             continue
         try:
+            # Skip generated outputs so reruns do not process files inside pdfw-pdfs.
             path.relative_to(output_root)
             continue
         except ValueError:
