@@ -5,7 +5,7 @@ from pathlib import Path
 
 
 def file_digest(file_path: Path, chunk_size: int = 1024 * 1024) -> str:
-    digest = hashlib.blake2b(digest_size=16)
+    digest = hashlib.blake2b(digest_size=32)
     with file_path.open("rb") as f:
         while True:
             chunk = f.read(chunk_size)
@@ -55,7 +55,7 @@ def main() -> int:
     files_by_hash = {}
 
     for group in files_by_size.values():
-        if len(group) < 2:
+        if len(group) == 1:
             continue
         for file_path in group:
             try:
