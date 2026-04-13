@@ -94,8 +94,11 @@ def iter_pdfs(source_dir: Path, output_root: Path):
             continue
         if path.suffix.lower() != ".pdf":
             continue
-        if output_root in path.parents:
+        try:
+            path.relative_to(output_root)
             continue
+        except ValueError:
+            pass
         yield path
 
 
@@ -138,6 +141,8 @@ def main() -> int:
     failures = 0
     for source_pdf in pdfs:
         relative_dir = source_pdf.parent.relative_to(source_path)
+        if relative_dir == Path("."):
+            relative_dir = Path()
         output_pdf = output_root / relative_dir / f"{source_pdf.stem}_pdfw.pdf"
         if convert_pdf(source_pdf, output_pdf, script_dir, pdfimages_exe) != 0:
             failures += 1
