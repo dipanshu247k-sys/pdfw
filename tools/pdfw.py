@@ -37,6 +37,7 @@ def load_pdfimages_path(script_dir: Path) -> Path:
 
 
 def _page_dimensions(page):
+    """Return page width and height from the page /MediaBox."""
     media_box = page.obj.get("/MediaBox")
     if media_box is None or len(media_box) != 4:
         raise ValueError("Missing or invalid /MediaBox in PDF page.")
@@ -45,6 +46,7 @@ def _page_dimensions(page):
 
 
 def _append_content_stream(pikepdf, pdf, page, stream_data: bytes) -> None:
+    """Append a new content stream to a page, preserving existing contents."""
     new_stream = pdf.make_stream(stream_data)
     contents = page.obj.get("/Contents")
     if contents is None:
@@ -57,6 +59,7 @@ def _append_content_stream(pikepdf, pdf, page, stream_data: bytes) -> None:
 
 
 def apply_watermark(pdf_path: Path, watermark_image: Path) -> None:
+    """Overlay a centered watermark image at 70% opacity on every PDF page."""
     try:
         import pikepdf
     except ImportError as exc:
