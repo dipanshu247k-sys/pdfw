@@ -1,4 +1,5 @@
 import argparse
+import hashlib
 import json
 import re
 import subprocess
@@ -32,6 +33,24 @@ def load_pdfimages_path(script_dir: Path) -> Path:
     if not pdfimages_exe.exists():
         raise FileNotFoundError(f"pdfimages.exe not found: {pdfimages_exe}")
     return pdfimages_exe
+
+
+def delete_duplicate_files(files: list[Path]) -> tuple[list[Path], int]:
+    """Delete duplicate files by content hash and return unique files + deleted count."""
+    seen_hashes: set[str] = set()
+    unique_files: list[Path] = []
+    deleted_count = 0
+
+    for file_path in files:
+        file_hash = hashlib.sha256(file_path.read_bytes()).hexdigest()
+        if file_hash in seen_hashes:
+            file_path.unlink()
+            deleted_count += 1
+            continue
+        seen_hashes.add(file_hash)
+        unique_files.append(file_path)
+
+    return unique_files, deleted_count
 
 
 def main() -> int:
@@ -78,12 +97,20 @@ def main() -> int:
             return 1
 
         try:
+            images, deleted_duplicates = delete_duplicate_files(images)
+        except OSError as exc:
+            print(f"Failed while deleting duplicate files: {exc}", file=sys.stderr)
+            return 1
+
+        try:
             with output_pdf.open("wb") as output_file:
                 output_file.write(img2pdf.convert([str(img) for img in images]))
         except (OSError, ValueError) as exc:
             print(f"Failed to create output PDF: {exc}", file=sys.stderr)
             return 1
 
+    if deleted_duplicates:
+        print(f"Deleted duplicate files: {deleted_duplicates}")
     print(f"Created: {output_pdf}")
     return 0
 
