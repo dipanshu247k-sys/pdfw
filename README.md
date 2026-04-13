@@ -18,6 +18,8 @@ Use the helper script by passing a PDF path as argument:
 python "%USERPROFILE%\Downloads\pdfw-tools\tools\pdfimages_to_pdfw.py" "C:\path\to\input.pdf"
 ```
 
+`pdfimages_to_pdfw.py` automatically runs `delete_duplicate_files.py` on the extracted images folder immediately after `pdfimages` finishes.
+
 Use the duplicate-file deleter by passing a target folder:
 
 ```cmd
