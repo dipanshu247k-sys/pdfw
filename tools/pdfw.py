@@ -10,6 +10,8 @@ from typing import Optional
 
 import img2pdf
 
+WATERMARK_OPACITY = 0.7
+
 
 def natural_key(value: str):
     """Build a natural-sort key so names with numbers sort in human order."""
@@ -65,7 +67,12 @@ def apply_watermark(pdf_path: Path, watermark_image: Path) -> None:
     except ImportError as exc:
         raise RuntimeError("pikepdf is required when using -wmark.") from exc
 
-    watermark_pdf_bytes = img2pdf.convert(str(watermark_image))
+    try:
+        watermark_pdf_bytes = img2pdf.convert(str(watermark_image))
+    except Exception as exc:
+        raise ValueError(
+            f"Failed to convert watermark image to PDF: {watermark_image}"
+        ) from exc
     with pikepdf.Pdf.open(pdf_path, allow_overwriting_input=True) as target_pdf:
         with pikepdf.Pdf.open(io.BytesIO(watermark_pdf_bytes)) as watermark_pdf:
             watermark_page = watermark_pdf.pages[0]
@@ -97,8 +104,8 @@ def apply_watermark(pdf_path: Path, watermark_image: Path) -> None:
                 resources["/ExtGState"] = ext_gstate
             ext_gstate["/WmAlpha"] = pikepdf.Dictionary(
                 Type=pikepdf.Name("/ExtGState"),
-                ca=0.7,
-                CA=0.7,
+                ca=WATERMARK_OPACITY,
+                CA=WATERMARK_OPACITY,
             )
 
             content = (
@@ -203,7 +210,10 @@ def main() -> int:
     parser.add_argument(
         "-wmark",
         dest="watermark_image",
-        help="Optional watermark image path to overlay at 70%% opacity on each output page",
+        help=(
+            f"Optional watermark image path to overlay at "
+            f"{int(WATERMARK_OPACITY * 100)}%% opacity on each output page"
+        ),
     )
     args = parser.parse_args()
 
