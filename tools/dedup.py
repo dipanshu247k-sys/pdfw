@@ -5,7 +5,7 @@ from pathlib import Path
 
 
 def file_digest(file_path: Path, chunk_size: int = 1024 * 1024) -> str:
-    digest = hashlib.blake2b(digest_size=32)
+    digest = hashlib.blake2b(digest_size=16)
     with file_path.open("rb") as f:
         while True:
             chunk = f.read(chunk_size)
