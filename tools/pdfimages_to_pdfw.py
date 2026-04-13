@@ -44,7 +44,7 @@ def main() -> int:
     script_dir = Path(__file__).resolve().parent
     try:
         pdfimages_exe = load_pdfimages_path(script_dir)
-    except Exception as exc:
+    except (FileNotFoundError, ValueError, json.JSONDecodeError) as exc:
         print(str(exc), file=sys.stderr)
         return 1
 
