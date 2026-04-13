@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Optional
 
 import img2pdf
+from PIL import Image
 
 WATERMARK_OPACITY = 0.7
 
@@ -38,86 +39,75 @@ def load_pdfimages_path(script_dir: Path) -> Path:
     return pdfimages_exe
 
 
-def _page_dimensions(page):
-    """Return page width and height from the page /MediaBox."""
-    media_box = page.obj.get("/MediaBox")
-    if media_box is None or len(media_box) != 4:
-        raise ValueError("Missing or invalid /MediaBox in PDF page.")
-    x0, y0, x1, y1 = (float(value) for value in media_box)
-    return (x1 - x0), (y1 - y0)
-
-
-def _append_content_stream(pikepdf_module, pdf, page, stream_data: bytes) -> None:
-    """Append a new content stream to a page, preserving existing contents."""
-    new_stream = pdf.make_stream(stream_data)
-    contents = page.obj.get("/Contents")
-    if contents is None:
-        page.obj["/Contents"] = new_stream
-        return
-    if isinstance(contents, pikepdf_module.Array):
-        contents.append(new_stream)
-        return
-    page.obj["/Contents"] = pikepdf_module.Array([contents, new_stream])
-
-
 def apply_watermark(pdf_path: Path, watermark_image: Path) -> None:
     """Overlay a centered watermark image at 70% opacity on every PDF page."""
     try:
-        import pikepdf
+        import fitz
     except ImportError as exc:
-        raise RuntimeError("pikepdf is required when using -wmark.") from exc
+        raise RuntimeError("PyMuPDF is required when using -wmark.") from exc
 
     try:
-        watermark_pdf_bytes = img2pdf.convert(str(watermark_image))
+        with Image.open(watermark_image) as source_image:
+            rgba_image = source_image.convert("RGBA")
+            alpha = rgba_image.getchannel("A")
+            opacity_scale = max(0, min(255, int(round(WATERMARK_OPACITY * 255))))
+            alpha = alpha.point(lambda value: (value * opacity_scale) // 255)
+            rgba_image.putalpha(alpha)
+
+            watermark_width, watermark_height = rgba_image.size
+            buffer = io.BytesIO()
+            rgba_image.save(buffer, format="PNG")
+            watermark_png_bytes = buffer.getvalue()
     except Exception as exc:
         raise ValueError(
-            f"Failed to convert watermark image to PDF: {watermark_image}"
+            f"Failed to process watermark image: {watermark_image}"
         ) from exc
-    with pikepdf.Pdf.open(pdf_path, allow_overwriting_input=True) as target_pdf:
-        with pikepdf.Pdf.open(io.BytesIO(watermark_pdf_bytes)) as watermark_pdf:
-            watermark_page = watermark_pdf.pages[0]
-            watermark_width, watermark_height = _page_dimensions(watermark_page)
-            watermark_form = target_pdf.copy_foreign(watermark_page.as_form_xobject())
+    temp_output_path = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            prefix="pdfw-wm-",
+            suffix=".pdf",
+            dir=pdf_path.parent,
+            delete=False,
+        ) as tmp_file:
+            temp_output_path = Path(tmp_file.name)
 
-        for page in target_pdf.pages:
-            page_width, page_height = _page_dimensions(page)
-            scale = min(page_width / watermark_width, page_height / watermark_height)
-            draw_width = watermark_width * scale
-            draw_height = watermark_height * scale
-            offset_x = (page_width - draw_width) / 2.0
-            offset_y = (page_height - draw_height) / 2.0
+        with fitz.open(str(pdf_path)) as target_pdf:
+            xref = 0
+            for page in target_pdf:
+                page_rect = page.rect
+                scale = min(
+                    page_rect.width / float(watermark_width),
+                    page_rect.height / float(watermark_height),
+                )
+                draw_width = float(watermark_width) * scale
+                draw_height = float(watermark_height) * scale
+                offset_x = (page_rect.width - draw_width) / 2.0
+                offset_y = (page_rect.height - draw_height) / 2.0
+                watermark_rect = fitz.Rect(
+                    offset_x,
+                    offset_y,
+                    offset_x + draw_width,
+                    offset_y + draw_height,
+                )
+                xref = page.insert_image(
+                    watermark_rect,
+                    stream=watermark_png_bytes,
+                    overlay=True,
+                    keep_proportion=False,
+                    xref=xref,
+                )
+            target_pdf.save(str(temp_output_path))
 
-            resources = page.obj.get("/Resources")
-            if resources is None:
-                resources = pikepdf.Dictionary()
-                page.obj["/Resources"] = resources
-
-            xobjects = resources.get("/XObject")
-            if xobjects is None:
-                xobjects = pikepdf.Dictionary()
-                resources["/XObject"] = xobjects
-            xobjects["/WmImg"] = watermark_form
-
-            ext_gstate = resources.get("/ExtGState")
-            if ext_gstate is None:
-                ext_gstate = pikepdf.Dictionary()
-                resources["/ExtGState"] = ext_gstate
-            ext_gstate["/WmAlpha"] = pikepdf.Dictionary(
-                Type=pikepdf.Name("/ExtGState"),
-                ca=WATERMARK_OPACITY,
-                CA=WATERMARK_OPACITY,
-            )
-
-            content = (
-                "q\n"
-                "/WmAlpha gs\n"
-                f"{draw_width:.6f} 0 0 {draw_height:.6f} {offset_x:.6f} {offset_y:.6f} cm\n"
-                "/WmImg Do\n"
-                "Q\n"
-            ).encode("ascii")
-            _append_content_stream(pikepdf, target_pdf, page, content)
-
-        target_pdf.save(pdf_path)
+        temp_output_path.replace(pdf_path)
+    except Exception as exc:
+        raise OSError(f"Failed to apply watermark to {pdf_path}: {exc}") from exc
+    finally:
+        if temp_output_path and temp_output_path.exists():
+            try:
+                temp_output_path.unlink()
+            except OSError:
+                pass
 
 
 def convert_pdf(
