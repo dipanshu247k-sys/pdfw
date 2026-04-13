@@ -22,7 +22,7 @@ python "%USERPROFILE%\Downloads\pdfw-tools\tools\pdfw.py" "C:\path\to\input.pdf"
 When given a folder, `pdfw.py` recursively processes all PDFs and writes outputs under `source_folder\pdfw-pdfs\`.
 
 `pdfw.py` automatically runs `dedup.py` on the extracted images folder immediately after `pdfimages` finishes.
-When `-wmark` is provided, `pdfw.py` overlays the given image onto each output PDF page as a centered watermark at 70% opacity.
+When `-wmark` is provided, `pdfw.py` overlays the given image onto each output PDF page as a centered watermark at 70% opacity using PyMuPDF (better handling for transparent PNG watermarks).
 
 Use the duplicate-file deleter by passing a target folder:
 
