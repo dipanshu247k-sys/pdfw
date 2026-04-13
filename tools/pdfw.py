@@ -11,7 +11,7 @@ from typing import Optional
 import img2pdf
 from PIL import Image
 
-WATERMARK_OPACITY = 0.7
+WATERMARK_OPACITY = 0.3
 
 
 def natural_key(value: str):
