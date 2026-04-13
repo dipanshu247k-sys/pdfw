@@ -18,7 +18,10 @@ def load_pdfimages_path(script_dir: Path) -> Path:
     if not config_path.exists():
         raise FileNotFoundError(f"Missing config file: {config_path}")
 
-    data = json.loads(config_path.read_text(encoding="utf-8-sig"))
+    try:
+        data = json.loads(config_path.read_text(encoding="utf-8-sig"))
+    except json.JSONDecodeError as exc:
+        raise ValueError(f"Invalid JSON format in {config_path}") from exc
     exe_path = data.get("pdfimages_exe")
     if not exe_path:
         raise ValueError(f"'pdfimages_exe' not found in {config_path}")
@@ -44,7 +47,7 @@ def main() -> int:
     script_dir = Path(__file__).resolve().parent
     try:
         pdfimages_exe = load_pdfimages_path(script_dir)
-    except (FileNotFoundError, ValueError, json.JSONDecodeError) as exc:
+    except (FileNotFoundError, ValueError) as exc:
         print(str(exc), file=sys.stderr)
         return 1
 
@@ -72,8 +75,12 @@ def main() -> int:
             print("No extracted images were found.", file=sys.stderr)
             return 1
 
-        with output_pdf.open("wb") as output_file:
-            output_file.write(img2pdf.convert([str(img) for img in images]))
+        try:
+            with output_pdf.open("wb") as output_file:
+                output_file.write(img2pdf.convert([str(img) for img in images]))
+        except Exception as exc:
+            print(f"Failed to create output PDF: {exc}", file=sys.stderr)
+            return 1
 
     print(f"Created: {output_pdf}")
     return 0
