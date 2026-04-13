@@ -45,17 +45,17 @@ def _page_dimensions(page):
     return (x1 - x0), (y1 - y0)
 
 
-def _append_content_stream(pikepdf, pdf, page, stream_data: bytes) -> None:
+def _append_content_stream(pikepdf_module, pdf, page, stream_data: bytes) -> None:
     """Append a new content stream to a page, preserving existing contents."""
     new_stream = pdf.make_stream(stream_data)
     contents = page.obj.get("/Contents")
     if contents is None:
         page.obj["/Contents"] = new_stream
         return
-    if isinstance(contents, pikepdf.Array):
+    if isinstance(contents, pikepdf_module.Array):
         contents.append(new_stream)
         return
-    page.obj["/Contents"] = pikepdf.Array([contents, new_stream])
+    page.obj["/Contents"] = pikepdf_module.Array([contents, new_stream])
 
 
 def apply_watermark(pdf_path: Path, watermark_image: Path) -> None:
