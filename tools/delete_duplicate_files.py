@@ -66,7 +66,7 @@ def main() -> int:
                 print(f"Failed to delete {file_path}: {exc}", file=sys.stderr)
                 return 1
 
-    remaining_count = sum(1 for group in files_by_hash.values() if len(group) == 1)
+    remaining_count = len(files) - deleted_count
     print(
         f"Completed. Deleted {deleted_count} file(s) from duplicate groups, "
         f"left {remaining_count} non-duplicate file(s)."
