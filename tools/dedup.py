@@ -4,8 +4,8 @@ import sys
 from pathlib import Path
 
 
-def file_sha256(file_path: Path, chunk_size: int = 1024 * 1024) -> str:
-    digest = hashlib.sha256()
+def file_digest(file_path: Path, chunk_size: int = 1024 * 1024) -> str:
+    digest = hashlib.blake2b(digest_size=16)
     with file_path.open("rb") as f:
         while True:
             chunk = f.read(chunk_size)
@@ -43,15 +43,27 @@ def main() -> int:
         print("No files found.")
         return 0
 
-    files_by_hash = {}
-
+    files_by_size = {}
     for file_path in files:
         try:
-            fingerprint = file_sha256(file_path)
+            file_size = file_path.stat().st_size
         except OSError as exc:
-            print(f"Failed to read {file_path}: {exc}", file=sys.stderr)
+            print(f"Failed to stat {file_path}: {exc}", file=sys.stderr)
             return 1
-        files_by_hash.setdefault(fingerprint, []).append(file_path)
+        files_by_size.setdefault(file_size, []).append(file_path)
+
+    files_by_hash = {}
+
+    for group in files_by_size.values():
+        if len(group) < 2:
+            continue
+        for file_path in group:
+            try:
+                fingerprint = file_digest(file_path)
+            except OSError as exc:
+                print(f"Failed to read {file_path}: {exc}", file=sys.stderr)
+                return 1
+            files_by_hash.setdefault(fingerprint, []).append(file_path)
 
     deleted_count = 0
     for group in files_by_hash.values():
