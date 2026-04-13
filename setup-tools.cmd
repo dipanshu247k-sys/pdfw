@@ -1,0 +1,33 @@
+@echo off
+setlocal enabledelayedexpansion
+
+set "DST=%USERPROFILE%\Downloads\pdfw-tools"
+if not exist "%DST%" mkdir "%DST%"
+
+echo [1/4] Fetching latest qpdf release info...
+for /f "delims=" %%i in ('powershell -NoProfile -Command "$a=(Invoke-RestMethod 'https://api.github.com/repos/qpdf/qpdf/releases/latest').assets; ($a | Where-Object { $_.name -match 'windows.*zip|win.*zip|msvc.*zip' } | Select-Object -First 1).browser_download_url"') do set "QPDF_URL=%%i"
+for /f "delims=" %%i in ('powershell -NoProfile -Command "$a=(Invoke-RestMethod 'https://api.github.com/repos/qpdf/qpdf/releases/latest').assets; ($a | Where-Object { $_.name -match 'windows.*zip|win.*zip|msvc.*zip' } | Select-Object -First 1).name"') do set "QPDF_NAME=%%i"
+
+echo [2/4] Fetching latest poppler release info...
+for /f "delims=" %%i in ('powershell -NoProfile -Command "$a=(Invoke-RestMethod 'https://api.github.com/repos/oschwartz10612/poppler-windows/releases/latest').assets; ($a | Where-Object { $_.name -match 'x86_64.*zip|win64.*zip|zip$' } | Select-Object -First 1).browser_download_url"') do set "POP_URL=%%i"
+for /f "delims=" %%i in ('powershell -NoProfile -Command "$a=(Invoke-RestMethod 'https://api.github.com/repos/oschwartz10612/poppler-windows/releases/latest').assets; ($a | Where-Object { $_.name -match 'x86_64.*zip|win64.*zip|zip$' } | Select-Object -First 1).name"') do set "POP_NAME=%%i"
+
+if "%QPDF_URL%"=="" (
+  echo Could not resolve qpdf asset URL.
+  exit /b 1
+)
+if "%POP_URL%"=="" (
+  echo Could not resolve poppler asset URL.
+  exit /b 1
+)
+
+echo [3/4] Downloading archives...
+powershell -NoProfile -Command "Invoke-WebRequest '%QPDF_URL%' -OutFile '%DST%\%QPDF_NAME%'"
+powershell -NoProfile -Command "Invoke-WebRequest '%POP_URL%' -OutFile '%DST%\%POP_NAME%'"
+
+echo [4/4] Extracting archives...
+powershell -NoProfile -Command "Expand-Archive -Force '%DST%\%QPDF_NAME%' '%DST%\qpdf'"
+powershell -NoProfile -Command "Expand-Archive -Force '%DST%\%POP_NAME%' '%DST%\poppler'"
+
+echo Done. Tools extracted to: %DST%
+endlocal
