@@ -80,7 +80,7 @@ def main() -> int:
         try:
             with output_pdf.open("wb") as output_file:
                 output_file.write(img2pdf.convert([str(img) for img in images]))
-        except (OSError, ValueError, TypeError) as exc:
+        except (OSError, ValueError) as exc:
             print(f"Failed to create output PDF: {exc}", file=sys.stderr)
             return 1
 
