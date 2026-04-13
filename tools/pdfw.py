@@ -10,7 +10,7 @@ from typing import Optional
 
 import img2pdf
 
-WATERMARK_OPACITY = 0.7
+WATERMARK_OPACITY = 0.25
 
 
 def natural_key(value: str):
@@ -61,7 +61,7 @@ def _append_content_stream(pikepdf_module, pdf, page, stream_data: bytes) -> Non
 
 
 def apply_watermark(pdf_path: Path, watermark_image: Path) -> None:
-    """Overlay a centered watermark image at 70% opacity on every PDF page."""
+    """Overlay a centered watermark image at 75% transparency (25% opacity)."""
     try:
         import pikepdf
     except ImportError as exc:
@@ -212,7 +212,8 @@ def main() -> int:
         dest="watermark_image",
         help=(
             f"Optional watermark image path to overlay at "
-            f"{int(WATERMARK_OPACITY * 100)}%% opacity on each output page"
+            f"{100 - int(WATERMARK_OPACITY * 100)}%% transparency "
+            f"({int(WATERMARK_OPACITY * 100)}%% opacity) on each output page"
         ),
     )
     args = parser.parse_args()
