@@ -10,7 +10,7 @@ from typing import Optional
 
 import img2pdf
 
-WATERMARK_OPACITY = 0.7
+WATERMARK_OPACITY = 0.3
 
 
 def natural_key(value: str):
